@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import re
 # 1. Write a Python program that matches a string that has an 'a' followed by zero or more 'b''s.
 
@@ -218,5 +217,4 @@ def main():
 
 
 if __name__ == "__main__":
->>>>>>> 3e74417b4bbde6c973a867d9d5558965d07a52ed
     main()
