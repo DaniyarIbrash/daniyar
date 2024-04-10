@@ -1,155 +1,168 @@
-import pygame, sys
-from pygame.locals import *
-import random, time
- 
-#Initialzing 
+import pygame
+import math
+
+def draw_rectangle(x1, y1, x2, y2):
+    x = min(x1, x2)
+    y = min(y1, y2)
+    width = abs(x1 - x2)
+    height = abs(y1 - y2)
+    return (x, y, width, height)
+
+def draw_square(x1, y1, x2, y2):
+    x = min(x1, x2)
+    y = min(y1, y2)
+    size = min(abs(x1 - x2), abs(y1 - y2))
+    return (x, y, size, size)
+
+def draw_right_triangle(x1, y1, x2, y2):
+    x_start = min(x1, x2)
+    x_end = max(x1, x2)
+    y_start = min(y1, y2)
+    y_end = max(y1, y2)
+    pygame.draw.line(screen, colors[color_index], (x_start, y_start), (x_start, y_end), 1)
+    pygame.draw.line(screen, colors[color_index], (x_start, y_end), (x_end, y_end), 1)
+    pygame.draw.line(screen, colors[color_index], (x_end, y_end), (x_start, y_start), 1)
+
+def draw_equilateral_triangle(x1, y1, x2, y2):
+    x_start = min(x1, x2)
+    y_start = min(y1, y2)
+    size = min(abs(x1 - x2), abs(y1 - y2))
+    x_end = x_start + size
+    y_end = y_start + size
+    
+    # Calculate the coordinates of the third vertex of the equilateral triangle
+    height = size * math.sqrt(3) / 2
+    x_mid = (x_start + x_end) // 2
+    y_mid = y_start - int(height)
+    
+    pygame.draw.line(screen, colors[color_index], (x_start, y_start), (x_end, y_start), 1)
+    pygame.draw.line(screen, colors[color_index], (x_end, y_start), (x_mid, y_mid), 1)
+    pygame.draw.line(screen, colors[color_index], (x_mid, y_mid), (x_start, y_start), 1)
+
+def draw_rhombus(x1, y1, x2, y2):
+    x_start = min(x1, x2)
+    x_end = max(x1, x2)
+    y_start = min(y1, y2)
+    y_end = max(y1, y2)
+    x_mid = (x_end + x_start) / 2
+    y_mid = (y_end + y_start) / 2
+    pygame.draw.line(screen, colors[color_index], (x_mid, y_start), (x_end, y_mid), 1)
+    pygame.draw.line(screen, colors[color_index], (x_end, y_mid), (x_mid, y_end), 1)
+    pygame.draw.line(screen, colors[color_index], (x_mid, y_end), (x_start, y_mid), 1)
+    pygame.draw.line(screen, colors[color_index], (x_start, y_mid), (x_mid, y_start), 1)
+
 pygame.init()
- 
-#Setting up FPS 
-FPS = 60
-FramePerSec = pygame.time.Clock()
- 
-#Creating colors
-BLUE  = (0, 0, 255)
-RED   = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
- 
-#Other Variables for use in the program
-SCREEN_WIDTH = 400
-SCREEN_HEIGHT = 600
-SPEED = 5
-SCORE = 0
-COIN_SCORE = 0
- 
-#Setting up Fonts
-font = pygame.font.SysFont("Verdana", 60)
-font_small = pygame.font.SysFont("Verdana", 20)
-game_over = font.render("Game Over", True, BLACK)
- 
-background = pygame.image.load("AnimatedStreet.png")
- 
-#Create a white screen 
-DISPLAYSURF = pygame.display.set_mode((400,600))
-DISPLAYSURF.fill(WHITE)
-pygame.display.set_caption("Game")
+screen = pygame.display.set_mode((800, 600))
+second_screen = pygame.Surface((800, 600))
 
-#class 'Coin'
-class Coin(pygame.sprite.Sprite):
-      def __init__(self):
-        super().__init__() 
-        self.image = pygame.image.load("coin.png")
-        self.image = pygame.transform.scale(self.image, (30, 30))
-        self.rect = self.image.get_rect()
-        self.rect.center = (random.randint(40, SCREEN_WIDTH-40), 0)  
- 
-      def move(self):
-        global SCORE
-        self.rect.move_ip(0, 10)
-        if (self.rect.top > 600):
-            SCORE += 1
-            self.rect.top = 0
-            self.rect.center = (random.randint(40, SCREEN_WIDTH - 40), 0)
+done = False
+clock = pygame.time.Clock()
+fps = 8
+start_x = 10
+start_y = 10
+end_x = 10
+end_y = 10
+color_index = 0
+tool_index = 0
+mouse_moving = False
 
-#class 'Enemy'
-class Enemy(pygame.sprite.Sprite):
-      def __init__(self):
-        super().__init__() 
-        self.image = pygame.image.load("Enemy.png")
-        self.rect = self.image.get_rect()
-        self.rect.center = (random.randint(40, SCREEN_WIDTH-40), 0)  
- 
-      def move(self):
-        global SCORE
-        self.rect.move_ip(0,SPEED)
-        if (self.rect.top > 600):
-            SCORE += 1
-            self.rect.top = 0
-            self.rect.center = (random.randint(40, SCREEN_WIDTH - 40), 0)
- 
-#class 'Player'
-class Player(pygame.sprite.Sprite):
-    def __init__(self):
-        super().__init__() 
-        self.image = pygame.image.load("Player.png")
-        self.rect = self.image.get_rect()
-        self.rect.center = (160, 520)
-        pygame.mixer.Sound('lab8_racer_background.wav').play()
-        
-    def move(self):
-        pressed_keys = pygame.key.get_pressed()
-         
-        if self.rect.left > 0:
-              if pressed_keys[K_LEFT]:
-                  self.rect.move_ip(-5, 0)
-        if self.rect.right < SCREEN_WIDTH:        
-              if pressed_keys[K_RIGHT]:
-                  self.rect.move_ip(5, 0)
-                   
-#Setting up Sprites        
-P1 = Player()
-E1 = Enemy()
-coin = Coin()
- 
-#Creating Sprites Groups
-enemies = pygame.sprite.Group()
-enemies.add(E1)
-all_sprites = pygame.sprite.Group()
-all_sprites.add(P1)
-all_sprites.add(E1)
-all_sprites.add(coin)
-coin_group = pygame.sprite.Group()
-coin_group.add(coin)
- 
-#Adding a new User event 
-INC_SPEED = pygame.USEREVENT + 1
-pygame.time.set_timer(INC_SPEED, 1000)
- 
-#Game Loop
-while True:
-       
-    #Cycles through all events occurring  
+screen.fill((0, 0, 0))
+
+colors = ["Red", "Pink", "Blue", "White", "Green", "Yellow", "Purple"]
+tools = ["Rectangle", "Circle", "Square", "Right Triangle", "Equilateral triangle", "Rhombus", "Eraser"]
+
+font = pygame.font.SysFont("comicsansms", 20)
+text_color = str("Color: " + str(colors[color_index]))
+text_tool = str("Tool: " + str(tools[tool_index]))
+text_color_surface = font.render(text_color, True, (255, 0, 255))  # Magenta
+text_tool_surface = font.render(text_tool, True, (255, 0, 255))  # Magenta
+
+while not done:
     for event in pygame.event.get():
-        if event.type == INC_SPEED:
-              SPEED += 0.5     
-        if event.type == QUIT:
-            pygame.quit()
-            sys.exit()
- 
-    DISPLAYSURF.blit(background, (0,0))
-    scores = font_small.render(str(SCORE), True, BLACK)
-    coin_scores = font_small.render( 'coins: ' + str(COIN_SCORE) , True, BLACK)
-    DISPLAYSURF.blit(scores, (10,10))
-    DISPLAYSURF.blit(coin_scores, (300, 10))
- 
-    #Moves and Re-draws all Sprites
-    for entity in all_sprites:
-        DISPLAYSURF.blit(entity.image, entity.rect)
-        entity.move()
+        if event.type == pygame.QUIT:
+            done = True
 
-    #To be run if collision occurs between Player and Enemy
-    if pygame.sprite.spritecollideany(P1, coin_group):
-        for entity in coin_group:
-            COIN_SCORE += 1
-            entity.rect.top = 0
-            entity.rect.center = (random.randint(40, SCREEN_WIDTH - 40), 0)
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:
+                fps = 60
+                if tool_index == 6:
+                    start_x = event.pos[0]
+                    start_y = event.pos[1]   
+                    end_x = start_x
+                    end_y = start_y     
+                if tool_index in [0, 1, 2, 3, 4, 5]:
+                    start_x = event.pos[0]
+                    start_y = event.pos[1]
+                mouse_moving = True
 
+        if event.type == pygame.MOUSEBUTTONUP:
+            if event.button == 1:
+                fps = 60
+                second_screen.blit(screen, (0, 0))
+                mouse_moving = False
 
-    #To be run if collision occurs between Player and Enemy
-    if pygame.sprite.spritecollideany(P1, enemies):
-          pygame.mixer.Sound('lab8_racer_crash.wav').play()
-          time.sleep(0.5)
-                    
-          DISPLAYSURF.fill(RED)
-          DISPLAYSURF.blit(game_over, (30,250))
-           
-          pygame.display.update()
-          for entity in all_sprites:
-                entity.kill() 
-          time.sleep(2)
-          pygame.quit()
-          sys.exit()        
-         
-    pygame.display.update()
-    FramePerSec.tick(FPS)
+        if event.type == pygame.MOUSEMOTION:
+            if mouse_moving:
+                fps = 60
+                if tool_index == 6:
+                    start_x = end_x
+                    start_y = end_y
+                    end_x = event.pos[0]
+                    end_y = event.pos[1]   
+                if tool_index in [0, 1, 2, 3, 4, 5]:
+                    end_x = event.pos[0]
+                    end_y = event.pos[1] 
+                    screen.blit(second_screen, (0, 0))
+                if tool_index == 0:
+                    pygame.draw.rect(screen, colors[color_index], pygame.Rect(draw_rectangle(start_x, start_y, end_x, end_y)), 1)
+                if tool_index == 1:
+                    pygame.draw.ellipse(screen, colors[color_index], pygame.Rect(draw_rectangle(start_x, start_y, end_x, end_y)), 1)
+                if tool_index == 2:
+                    pygame.draw.rect(screen, colors[color_index], pygame.Rect(draw_square(start_x, start_y, end_x, end_y)), 1)
+                if tool_index == 3:
+                    draw_right_triangle(start_x, start_y, end_x, end_y)
+                if tool_index == 4:
+                    draw_equilateral_triangle(start_x, start_y, end_x, end_y)
+                if tool_index == 5:
+                    draw_rhombus(start_x, start_y, end_x, end_y)
+                if tool_index == 6:
+                    pygame.draw.line(screen, (0, 0, 0), (start_x, start_y), (end_x, end_y), 7)
+
+    pressed = pygame.key.get_pressed()
+    if pressed[pygame.K_RIGHT]: 
+        fps = 7
+        color_index += 1
+        if color_index == len(colors):
+            color_index = 0
+        text_color = str("Color: " + str(colors[color_index]))
+        text_color_surface = font.render(text_color, True, (255, 0, 255))  # Magenta
+
+    if pressed[pygame.K_LEFT]: 
+        fps = 7
+        color_index -= 1
+        if color_index == -1:
+            color_index = len(colors) - 1
+        text_color = str("Color: " + str(colors[color_index]))
+        text_color_surface = font.render(text_color, True, (255, 0, 255))  # Magenta
+
+    if pressed[pygame.K_UP]:
+        fps = 7
+        tool_index += 1
+        if tool_index == len(tools):
+            tool_index = 0
+        text_tool = str("Tool: " + str(tools[tool_index]))
+        text_tool_surface = font.render(text_tool, True, (255, 0, 255))  # Magenta
+
+    if pressed[pygame.K_DOWN]:
+        fps = 7
+        tool_index -= 1
+        if tool_index == -1:
+            tool_index = len(tools) - 1
+        text_tool = str("Tool: " + str(tools[tool_index]))
+        text_tool_surface = font.render(text_tool, True, (255, 0, 255))  # Magenta
+
+    pygame.draw.rect(screen, "White", (0, 0, 800, 30))
+    screen.blit(text_color_surface, (1, 1))
+    screen.blit(text_tool_surface, (201, 1))
+    pygame.display.flip()
+    clock.tick(fps)
